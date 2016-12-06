@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.location.Address;
+import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
@@ -44,7 +45,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import java.io.IOException;
 import java.util.List;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback{
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, LocationListener {
 
     private GoogleMap mMap;
     private LocationListener locationListener;
@@ -54,11 +55,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Location mLastLocation;
     private Marker mCurrLocationMarker;
     private int REQUEST_CODE_LOCATION = 2;
+    DBHelper mydb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.content_maps);
+        mydb = new DBHelper(this);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         Button start = (Button) findViewById(R.id.idStart);
         Button stop = (Button) findViewById(R.id.idStop);
@@ -121,22 +124,65 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             buildGoogleApiClient();
             mMap.setMyLocationEnabled(true);
         }
+        // Get LocationManager object from System Service LOCATION_SERVICE
+        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+        // Create a criteria object to retrieve provider
+        Criteria criteria = new Criteria();
+
+        // Get the name of the best provider
+        String provider = locationManager.getBestProvider(criteria, true);
+
+        // Get Current Location
+        Location myLocation = locationManager.getLastKnownLocation(provider);
+
+        // set map type
+        mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+
+        // Get latitude of the current location
+        double latitude = myLocation.getLatitude();
+
+        // Get longitude of the current location
+        double longitude = myLocation.getLongitude();
+
+        // Create a LatLng object for the current location
+        LatLng latLng = new LatLng(latitude, longitude);
+
+        // Show the current location in Google Map
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+
+        // Zoom in the Google Map
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(14));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(latitude, longitude)).title("You are here!").snippet("Consider yourself located"));
+
+        EditText lat = (EditText) findViewById(R.id.idLokasiLat);
+        EditText lng = (EditText) findViewById(R.id.idLokasiLng);
+        String lat1 = String.valueOf(latitude);
+        String lng1 = String.valueOf(longitude);
+        lat.setText(lat1);
+        lng.setText(lng1);
+
+
+
 
         // Add a marker in Sydney and move the camera
-        LatLng ITS = new LatLng(-7.28, 112.79);
+        /*LatLng ITS = new LatLng(-7.28, 112.79);
         mMap.addMarker(new MarkerOptions().position(ITS).title("Marker in ITS"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(ITS, 15));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(ITS, 15));*/
     }
 
     private void goToPeta(Double lat, Double lng, float z) {
         LatLng Lokasibaru = new LatLng(lat, lng);
         mMap.addMarker(new MarkerOptions().position(Lokasibaru).title("Marker in " + lat + ":" + lng));
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Lokasibaru, z));
+        //inputData();
     }
 
     View.OnClickListener op = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
+            EditText waktu = (EditText) findViewById(R.id.idWaktu);
+            EditText jarak = (EditText) findViewById(R.id.idJarak);
             switch (v.getId()) {
                 case R.id.btnZoom:
                     hideKeyboard(v);
@@ -149,8 +195,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     } else goCari();
                     break;
                 case R.id.idStart:
-                    aktifkanGPS(true);
                     Log.i("mapsactivity", "aktifkanGPS : true");
+                    if(!waktu.getText().toString().isEmpty() && !jarak.getText().toString().isEmpty()){
+                        aktifkanGPS(true);
+                    }
+                    else if(waktu.getText().toString().isEmpty() && jarak.getText().toString().isEmpty()){
+                        Toast.makeText(MapsActivity.this,"Isi waktu dan jarak terlebih dahulu", Toast.LENGTH_SHORT).show();
+                    }
+                    else if(waktu.getText().toString().isEmpty()){
+                        Toast.makeText(MapsActivity.this,"Isi waktu terlebih dahulu", Toast.LENGTH_SHORT).show();
+                    }
+                    else if(jarak.getText().toString().isEmpty()){
+                        Toast.makeText(MapsActivity.this,"Isi jarak terlebih dahulu", Toast.LENGTH_SHORT).show();
+                    }
                     break;
                 case R.id.idStop:
                     aktifkanGPS(false);
@@ -175,6 +232,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         Toast.makeText(this, "Move to Lat : " + dbllat + " Long : " + dbllng, Toast.LENGTH_LONG).show();
         goToPeta(dbllat, dbllng, dblzoom);
+
     }
 
     private void goCari() {
@@ -202,7 +260,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Float dblzoom = Float.parseFloat(zoom.getText().toString());
             Toast.makeText(this, "Move to " + findAlamat + " Lat :" + lintang + " Long:" + bujur, Toast.LENGTH_LONG).show();
             goToPeta(lintang, bujur, dblzoom);
-
 
             lat.setText(lintang.toString());
             lng.setText(bujur.toString());
@@ -258,7 +315,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void aktifkanGPS(boolean onoff) {
-
+        inputData();
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
@@ -338,6 +395,62 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .build();
         mGoogleApiClient.connect();
     }
+
+    public void inputData(){
+        EditText lat = (EditText) findViewById(R.id.idLokasiLat);
+        EditText lng = (EditText) findViewById(R.id.idLokasiLng);
+        if(mydb.insertMarker(lat.getText().toString(), lng.getText().toString())){
+            Log.i("Activity","lat : "+lat.getText().toString());
+            Log.i("Activity","lng : "+lng.getText().toString());
+            Toast.makeText(getApplicationContext(), "Marker Added", Toast.LENGTH_SHORT).show();
+            int id_x = mydb.getMaxId();
+            Log.i("Activity","NEW ID : "+id_x);
+        }
+        else{
+            Toast.makeText(getApplicationContext(), "Adding Marker Fail", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void onLocationChanged(Location location) {
+        mLastLocation = location;
+        if (mCurrLocationMarker != null) {
+            mCurrLocationMarker.remove();
+        }
+
+        //Place current location marker
+        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+        MarkerOptions markerOptions = new MarkerOptions();
+        markerOptions.position(latLng);
+        markerOptions.title("Current Position");
+        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
+        mCurrLocationMarker = mMap.addMarker(markerOptions);
+
+        //move map camera
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
+
+        //optionally, stop location updates if only current location is needed
+        /*if (mGoogleApiClient != null) {
+            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+        }*/
+
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String provider) {
+
+    }
+
     /*
     @Override
     public void onLocationChanged(Location location) {
