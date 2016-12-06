@@ -116,6 +116,12 @@
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="Reset"
+            android:id="@+id/idReset"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:text="Tutup"
             android:id="@+id/idTutup"/>
 

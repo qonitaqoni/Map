@@ -15,10 +15,10 @@ import java.util.ArrayList;
 public class DBHelper extends SQLiteOpenHelper {
 
     public static final String DATABASE_NAME = "Map.db";
-    public static final String CONTACTS_TABLE_NAME = "marker";
-    public static final String CONTACTS_COLUMN_ID = "id";
-    public static final String CONTACTS_COLUMN_LAT = "latitude";
-    public static final String CONTACTS_COLUMN_LNG = "longitude";
+    public static final String MARKERS_TABLE_NAME = "marker";
+    public static final String MARKERS_COLUMN_ID = "id";
+    public static final String MARKERS_COLUMN_LAT = "latitude";
+    public static final String MARKERS_COLUMN_LNG = "longitude";
 
     public DBHelper(Context context)
     {
@@ -72,44 +72,33 @@ public class DBHelper extends SQLiteOpenHelper {
         res.moveToFirst();
 
         while(res.isAfterLast() == false){
-            array_list.add(res.getString(res.getColumnIndex(CONTACTS_COLUMN_ID)));
+            array_list.add(res.getString(res.getColumnIndex(MARKERS_COLUMN_ID)));
             res.moveToNext();
         }
         return array_list;
     }
 
-    public Integer deleteMarker (Integer id)
+    public Cursor getMarkers()
+    {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor res =  db.rawQuery( "select * from marker", null );
+        return res;
+    }
+
+    /*public Integer deleteMarker (Integer id)
     {
         SQLiteDatabase db = this.getWritableDatabase();
         return db.delete("marker",
                 "id = ? ",
                 new String[] { Integer.toString(id) });
-    }
+    }*/
 
-    public boolean updateMarker (Integer id, String latitude, String longitude)
+    public void deleteMarker ()
     {
         SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues contentValues = new ContentValues();
-        contentValues.put("latitude", latitude);
-        contentValues.put("longitude", longitude);
-
-        db.update("marker", contentValues, "id = ? ", new String[] { Integer.toString(id) } );
-        return true;
+        db.delete("marker", null, null);
     }
 
-    /*public ArrayList<String> findData(String search){
-        ArrayList<String> array_list = new ArrayList<String>();
-
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor res =  db.rawQuery( "select * from contacts where name like '%"+search+"%' or phone like '%"+search+"%' or birth like '%"+search+"%' or address like '%"+search+"%' ", null );
-        res.moveToFirst();
-
-        while(res.isAfterLast() == false){
-            array_list.add(res.getString(res.getColumnIndex(CONTACTS_COLUMN_ID)));
-            res.moveToNext();
-        }
-        return array_list;
-    }*/
 
 }
 
