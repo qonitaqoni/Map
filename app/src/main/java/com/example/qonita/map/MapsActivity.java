@@ -139,7 +139,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // Get Current Location
         Location myLocation = locationManager.getLastKnownLocation(provider);
-
+        if (myLocation == null) return;
         // set map type
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
 
@@ -148,6 +148,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // Get longitude of the current location
         double longitude = myLocation.getLongitude();
+        Log.i("Maps", "Lng: "+ longitude);
+
 
         // Create a LatLng object for the current location
         LatLng latLng = new LatLng(latitude, longitude);
@@ -452,9 +454,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
 
         //optionally, stop location updates if only current location is needed
-        *//*if (mGoogleApiClient != null) {
+        if (mGoogleApiClient != null) {
             LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
-        }*//*
+        }
 
     }
 
@@ -472,7 +474,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onProviderDisabled(String provider) {
 
     }*/
-
 
 
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
@@ -519,6 +520,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         @Override
         public void onLocationChanged(Location location) {
+            if (location == null){
+                Log.i("Maps", "Lokasi :"+ location);
+                return;
+            }
             txtLang = (EditText) findViewById(R.id.idLokasiLng);
             txtLat = (EditText) findViewById(R.id.idLokasiLat);
 

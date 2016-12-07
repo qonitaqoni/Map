@@ -11,14 +11,15 @@
         <EditText
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:hint="latitude" android:inputType="number"
+        android:hint="latitude"
+        android:inputType="text"
         android:layout_weight="1"
             android:id="@+id/idLokasiLat"/>
         <EditText
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:hint="langitude"
-            android:inputType="number"
+            android:inputType="text"
             android:layout_weight="1"
             android:id="@+id/idLokasiLng"/>
     </LinearLayout>
@@ -31,6 +32,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:hint="perbesaran"
+            android:text="10"
             android:id="@+id/etZoom"
             android:layout_weight="2"
             android:inputType="number"/>
@@ -86,7 +88,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Jarak (m)"
-            android:inputType="number"
+            android:inputType="text"
             android:id="@+id/idJarak"
             android:layout_weight="1"/>
 
