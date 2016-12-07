@@ -88,7 +88,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Jarak (m)"
-            android:inputType="text"
+            android:inputType="number"
             android:id="@+id/idJarak"
             android:layout_weight="1"/>
 
@@ -100,32 +100,35 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="30dp">
+        android:layout_marginTop="30dp"
+        android:weightSum="4">
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Start"
             android:id="@+id/idStart"
-            android:layout_marginRight="20dp"/>
+            android:layout_weight="1"/>
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Stop"
             android:id="@+id/idStop"
-            android:layout_marginRight="20dp"/>
+            android:layout_weight="1"/>
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Reset"
-            android:id="@+id/idReset"/>
+            android:id="@+id/idReset"
+            android:layout_weight="1"/>
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Tutup"
-            android:id="@+id/idTutup"/>
+            android:id="@+id/idTutup"
+            android:layout_weight="1"/>
 
 
     </LinearLayout>

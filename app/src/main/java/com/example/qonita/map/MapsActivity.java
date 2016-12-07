@@ -404,8 +404,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     public void loadMarker(){
        Cursor cursor = mydb.getMarkers();
-
-        for(int i =0;i<cursor.getCount();i++){
+        Log.i("Maps", "rows :"+cursor.getCount());
+        for(int i=0; i<cursor.getCount();i++){
             String lat_marker = cursor.getString(cursor.getColumnIndex(DBHelper.MARKERS_COLUMN_LAT));
             String lng_marker = cursor.getString(cursor.getColumnIndex(DBHelper.MARKERS_COLUMN_LNG));
             double lat = Double.valueOf(lat_marker);
