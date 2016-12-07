@@ -69,10 +69,15 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         Button start = (Button) findViewById(R.id.idStart);
         Button stop = (Button) findViewById(R.id.idStop);
+        Button reset = (Button) findViewById(R.id.idReset);
+        Button showAll = (Button) findViewById(R.id.idShowAll);
         Button tutup = (Button) findViewById(R.id.idTutup);
         start.setOnClickListener(op);
         stop.setOnClickListener(op);
+        reset.setOnClickListener(op);
+        showAll.setOnClickListener(op);
         tutup.setOnClickListener(op);
+
         locationListener = new MapsListener();
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         /*if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -201,6 +206,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     break;
                 case R.id.idStart:
                     Log.i("mapsactivity", "aktifkanGPS : true");
+                    mydb.deleteMarker();
                     if(!waktu.getText().toString().isEmpty() && !jarak.getText().toString().isEmpty()){
                         aktifkanGPS(true);
                     }
@@ -216,11 +222,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     break;
                 case R.id.idStop:
                     aktifkanGPS(false);
-                    loadMarker();
                     Log.i("mapsactivity", "aktifkanGPS : false");
                     break;
                 case R.id.idReset:
                     clearMarkers();
+                    break;
+                case R.id.idShowAll:
+                    loadMarker();
                     break;
                 case R.id.idTutup:
                     onDestroy();
@@ -405,6 +413,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void loadMarker(){
        Cursor cursor = mydb.getMarkers();
         Log.i("Maps", "rows :"+cursor.getCount());
+        cursor.moveToFirst();
         for(int i=0; i<cursor.getCount();i++){
             String lat_marker = cursor.getString(cursor.getColumnIndex(DBHelper.MARKERS_COLUMN_LAT));
             String lng_marker = cursor.getString(cursor.getColumnIndex(DBHelper.MARKERS_COLUMN_LNG));
@@ -432,6 +441,22 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     public void clearMarkers(){
         mydb.deleteMarker();
+        Toast.makeText(MapsActivity.this,"Reset All Data", Toast.LENGTH_LONG).show();
+        mMap.clear();
+
+        EditText lat = (EditText) findViewById(R.id.idLokasiLat);
+        EditText lng = (EditText) findViewById(R.id.idLokasiLng);
+        Double latitude = Double.parseDouble(lat.getText().toString());
+        Double longitude = Double.parseDouble(lng.getText().toString());
+        LatLng latLng = new LatLng(latitude, longitude);
+
+        //show current location
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+
+        //zoom in
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(14));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(latitude, longitude)).title("You are here!"));
+
     }
 
 

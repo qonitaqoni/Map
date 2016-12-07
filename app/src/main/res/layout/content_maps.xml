@@ -101,7 +101,7 @@
         android:orientation="horizontal"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="30dp"
-        android:weightSum="4">
+        android:weightSum="5">
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -123,6 +123,7 @@
             android:id="@+id/idReset"
             android:layout_weight="1"/>
 
+
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -130,7 +131,19 @@
             android:id="@+id/idTutup"
             android:layout_weight="1"/>
 
-
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="center_horizontal">
+        <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Show All"
+        android:id="@+id/idShowAll"
+        android:layout_weight="1"/>
     </LinearLayout>
 
 </LinearLayout>
+
