@@ -71,12 +71,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         Button stop = (Button) findViewById(R.id.idStop);
         Button reset = (Button) findViewById(R.id.idReset);
         Button showAll = (Button) findViewById(R.id.idShowAll);
-        Button tutup = (Button) findViewById(R.id.idTutup);
         start.setOnClickListener(op);
         stop.setOnClickListener(op);
         reset.setOnClickListener(op);
         showAll.setOnClickListener(op);
-        tutup.setOnClickListener(op);
+
 
         locationListener = new MapsListener();
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -230,10 +229,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 case R.id.idShowAll:
                     loadMarker();
                     break;
-                case R.id.idTutup:
+                /*case R.id.idTutup:
                     onDestroy();
                     MapsActivity.super.onDestroy();
-                    break;
+                    break;*/
             }
         }
     };
@@ -247,7 +246,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         Double dbllng = Double.parseDouble(lng.getText().toString());
         Float dblzoom = Float.parseFloat(zoom.getText().toString());
 
-        Toast.makeText(this, "Move to Lat : " + dbllat + " Long : " + dbllng, Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "Move to Lat : " + dbllat + " Long : " + dbllng, Toast.LENGTH_SHORT).show();
         goToPeta(dbllat, dbllng, dblzoom);
 
     }
@@ -273,7 +272,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             Toast.makeText(getBaseContext(), "Found!" + findAlamat, Toast.LENGTH_SHORT).show();
             EditText zoom = (EditText) findViewById(R.id.etZoom);
             Float dblzoom = Float.parseFloat(zoom.getText().toString());
-            Toast.makeText(this, "Move to " + findAlamat + " Lat :" + lintang + " Long:" + bujur, Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Move to " + findAlamat + " Lat :" + lintang + " Long:" + bujur, Toast.LENGTH_SHORT).show();
             goToPeta(lintang, bujur, dblzoom);
 
             lat.setText(lintang.toString());
@@ -293,7 +292,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         asal.setLongitude(lngAsal);
         float jarak = (float) asal.distanceTo(tujuan) / 1000;
         String jaraknya = String.valueOf(jarak);
-        Toast.makeText(getBaseContext(), "jarak :" + jaraknya + " km", Toast.LENGTH_LONG).show();
+        Toast.makeText(getBaseContext(), "jarak :" + jaraknya + " km", Toast.LENGTH_SHORT).show();
     }
 
     private void hideKeyboard(View v) {
@@ -357,12 +356,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, waktunya, jaraknya, locationListener);
-            Toast.makeText(getBaseContext(), "GPS Aktif Time: " + waktunya + " Range: " + jaraknya, Toast.LENGTH_LONG).show();
+            Toast.makeText(getBaseContext(), "GPS Aktif Time: " + waktunya + " Range: " + jaraknya, Toast.LENGTH_SHORT).show();
 
         } else {
 
             locationManager.removeUpdates(locationListener);
-            Toast.makeText(getBaseContext(), "GPS NonAktif", Toast.LENGTH_LONG).show();
+            Toast.makeText(getBaseContext(), "GPS NonAktif", Toast.LENGTH_SHORT).show();
 
         }
     }
@@ -393,7 +392,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
-                    Toast.makeText(this, "permission denied", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "permission denied", Toast.LENGTH_SHORT).show();
                 }
                 return;
             }
@@ -441,7 +440,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     public void clearMarkers(){
         mydb.deleteMarker();
-        Toast.makeText(MapsActivity.this,"Reset All Data", Toast.LENGTH_LONG).show();
+        Toast.makeText(MapsActivity.this,"Reset All Data", Toast.LENGTH_SHORT).show();
         mMap.clear();
 
         EditText lat = (EditText) findViewById(R.id.idLokasiLat);
