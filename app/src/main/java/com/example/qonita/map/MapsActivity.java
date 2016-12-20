@@ -306,7 +306,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void getAlamatAsal(){
-        String url = "https://maps.googleapis.com/maps/api/geocode/json?latlng="+lat.getText().toString()+","+lng.getText().toString()+"&key="+this.getResources().getString(R.string.google_maps_key);
+        String url = "https://maps.googleapis.com/maps/api/geocode/json?latlng="+lat.getText().toString()+","+lng.getText().toString()+"&key="+SERVER_KEY;
         Log.i("debugsz","getAlamatAsal url : "+url);
         RequestQueue mRequestQueue;
         Cache cache = new DiskBasedCache(getCacheDir(), 1024 * 1024); // 1MB cap
@@ -396,7 +396,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         Double lngTujuan = Double.parseDouble(location.getString("lng"));
                         koordinatAsal = new LatLng(dbllat, dbllng);
                         koordinatTujuan = new LatLng(latTujuan, lngTujuan);
-                        Routing routing = new Routing.Builder().travelMode(AbstractRouting.TravelMode.DRIVING).withListener(MapsActivity.this).alternativeRoutes(true).waypoints(koordinatAsal, koordinatTujuan)
+                        Routing routing = new Routing.Builder().
+                                travelMode(AbstractRouting.TravelMode.DRIVING).
+                                withListener(MapsActivity.this).
+                                alternativeRoutes(true)
+                                .waypoints(koordinatAsal, koordinatTujuan)
                                 .avoid(AbstractRouting.AvoidKind.HIGHWAYS)
                                 .build();
                         routing.execute();
@@ -421,10 +425,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void goCari() {
         Log.i("debugsz","goCari");
-        getAlamatAsal();
+        //getAlamatAsal();
         getDetailTujuan();
         //getDirections();
-        EditText daerah = (EditText) findViewById(R.id.etDaerah);
+        /*EditText daerah = (EditText) findViewById(R.id.etDaerah);
         Geocoder g = new Geocoder(getBaseContext());
         try {
             Log.i("debugsz","goCari try");
@@ -477,7 +481,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         } catch (IOException e) {
             e.printStackTrace();
             Log.i("debugsz","goCari catch");
-        }
+        }*/
     }
 
     @Override
