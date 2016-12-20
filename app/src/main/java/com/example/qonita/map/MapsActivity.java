@@ -32,6 +32,18 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.android.volley.Cache;
+import com.android.volley.DefaultRetryPolicy;
+import com.android.volley.Network;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.BasicNetwork;
+import com.android.volley.toolbox.DiskBasedCache;
+import com.android.volley.toolbox.HurlStack;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.directions.route.AbstractRouting;
 import com.directions.route.Route;
 import com.directions.route.RouteException;
@@ -53,6 +65,8 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -61,10 +75,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
+import static android.location.Geocoder.isPresent;
 import static com.example.qonita.map.R.id.map;
 import static com.example.qonita.map.R.id.thing_proto;
 
@@ -81,8 +98,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     DBHelper mydb;
     private ArrayList<LatLng> markerPoints;
     private List<Polyline> polylines;
-    private static final int[] COLORS = new int[]{R.color.wallet_holo_blue_light, R.color.wallet_holo_blue_light, R.color.wallet_holo_blue_light, R.color.wallet_primary_text_holo_light, R.color.primary_dark_material_light};
+    private static final int[] COLORS = new int[]{R.color.colorAccent, R.color.colorAccent, R.color.colorAccent, R.color.colorAccent, R.color.colorAccent};
     EditText lat,lng;
+    String alamat_asal = "ITS+Surabaya";
+    String SERVER_KEY = "AIzaSyAu5-x776Xam-tdVNNS015NDgeDFwDd9g4";
+    LatLng koordinatTujuan,koordinatAsal;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.i("debugsz","OnCreate");
@@ -90,6 +110,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         setContentView(R.layout.content_maps);
         lat = (EditText) findViewById(R.id.idLokasiLat);
         lng = (EditText) findViewById(R.id.idLokasiLng);
+        lat.setText("-7.2574719");
+        lng.setText("112.7520883");
         mydb = new DBHelper(this);
         markerPoints = new ArrayList<LatLng>();
 
@@ -229,6 +251,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     goToLokasi();
                     break;
                 case R.id.btnCari:
+                    Log.i("debugsz","TombolCari clicked");
                     EditText zoom = (EditText) findViewById(R.id.etZoom);
                     if (zoom.getText().toString().isEmpty()) {
                         Toast.makeText(MapsActivity.this, "Isi perbesaran terlebih dahulu", Toast.LENGTH_SHORT).show();
@@ -282,18 +305,146 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     }
 
+    private void getAlamatAsal(){
+        String url = "https://maps.googleapis.com/maps/api/geocode/json?latlng="+lat.getText().toString()+","+lng.getText().toString()+"&key="+this.getResources().getString(R.string.google_maps_key);
+        Log.i("debugsz","getAlamatAsal url : "+url);
+        RequestQueue mRequestQueue;
+        Cache cache = new DiskBasedCache(getCacheDir(), 1024 * 1024); // 1MB cap
+        Network network = new BasicNetwork(new HurlStack());
+        mRequestQueue = new RequestQueue(cache, network);
+        mRequestQueue.start();
+        JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.GET,url,new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                Log.i("debugsz","getAlamatAsal response : "+response);
+                try {
+                    if(response.getString("status").equals("OK")){
+                        JSONArray rows = response.getJSONArray("results");
+                        JSONObject data = (JSONObject)rows.get(0);
+                        alamat_asal = data.getString("formatted_address");
+                        Log.i("debugsz","getAlamatAsal alamat_asal : "+alamat_asal);
+
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        },new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+            }
+        }
+        );
+        jsonObjReq.setRetryPolicy(new DefaultRetryPolicy(10000, DefaultRetryPolicy.DEFAULT_MAX_RETRIES, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+        Volley.newRequestQueue(this).add(jsonObjReq);
+    }
+
+    private void getDirections(){
+        EditText daerah = (EditText) findViewById(R.id.etDaerah);
+        String url = "https://maps.googleapis.com/maps/api/directions/json?origin="+alamat_asal+"&destination="+daerah.getText().toString()+"&mode=transit&key="+this.getResources().getString(R.string.google_maps_key);
+        Log.i("debugsz","getDirections url : "+url);
+        RequestQueue mRequestQueue;
+        Cache cache = new DiskBasedCache(getCacheDir(), 1024 * 1024); // 1MB cap
+        Network network = new BasicNetwork(new HurlStack());
+        mRequestQueue = new RequestQueue(cache, network);
+        mRequestQueue.start();
+        JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.GET,url,new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                Log.i("debugsz","getDirections response distance : "+response);
+                try {
+                    if(response.getString("status").equals("OK")){
+
+
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        },new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+            }
+        }
+        );
+        jsonObjReq.setRetryPolicy(new DefaultRetryPolicy(10000, DefaultRetryPolicy.DEFAULT_MAX_RETRIES, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+        Volley.newRequestQueue(this).add(jsonObjReq);
+    }
+
+    private void getDetailTujuan(){
+        EditText daerah = (EditText) findViewById(R.id.etDaerah);
+        String url = "https://maps.googleapis.com/maps/api/geocode/json?address="+daerah.getText().toString()+"&key="+SERVER_KEY;
+        Log.i("debugsz","getDetailTujuan url : "+url);
+        RequestQueue mRequestQueue;
+        Cache cache = new DiskBasedCache(getCacheDir(), 1024 * 1024); // 1MB cap
+        Network network = new BasicNetwork(new HurlStack());
+        mRequestQueue = new RequestQueue(cache, network);
+        mRequestQueue.start();
+        JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.GET,url,new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                Log.i("debugsz","getDetailTujuan response distance : "+response);
+                try {
+                    if(response.getString("status").equals("OK")){
+                        JSONArray rows = response.getJSONArray("results");
+                        JSONObject data = (JSONObject)rows.get(0);
+                        JSONObject geometry = data.getJSONObject("geometry");
+                        JSONObject location = geometry.getJSONObject("location");
+                        Double dbllat = Double.parseDouble(lat.getText().toString());
+                        Double dbllng = Double.parseDouble(lng.getText().toString());
+                        Double latTujuan = Double.parseDouble(location.getString("lat"));
+                        Double lngTujuan = Double.parseDouble(location.getString("lng"));
+                        koordinatAsal = new LatLng(dbllat, dbllng);
+                        koordinatTujuan = new LatLng(latTujuan, lngTujuan);
+                        Routing routing = new Routing.Builder().travelMode(AbstractRouting.TravelMode.DRIVING).withListener(MapsActivity.this).alternativeRoutes(true).waypoints(koordinatAsal, koordinatTujuan)
+                                .avoid(AbstractRouting.AvoidKind.HIGHWAYS)
+                                .build();
+                        routing.execute();
+
+                        alamat_asal = data.getString("formatted_address");
+                        Log.i("debugsz","getAlamatAsal alamat_asal : "+alamat_asal);
+
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        },new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+            }
+        }
+        );
+        jsonObjReq.setRetryPolicy(new DefaultRetryPolicy(10000, DefaultRetryPolicy.DEFAULT_MAX_RETRIES, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+        Volley.newRequestQueue(this).add(jsonObjReq);
+    }
+
     private void goCari() {
-        EditText lat = (EditText) findViewById(R.id.idLokasiLat);
-        EditText lng = (EditText) findViewById(R.id.idLokasiLng);
+        Log.i("debugsz","goCari");
+        getAlamatAsal();
+        getDetailTujuan();
+        //getDirections();
         EditText daerah = (EditText) findViewById(R.id.etDaerah);
         Geocoder g = new Geocoder(getBaseContext());
         try {
-            List<android.location.Address> daftar = g.getFromLocationName(daerah.getText().toString(), 1);
+            Log.i("debugsz","goCari try");
+            if(isPresent()){
+                Log.i("debugsz","goCari Present");
+            }else{
+                Log.i("debugsz","goCari not Present");
+            }
+            Log.i("debugsz","goCari daerah : "+daerah.getText().toString());
+            List<Address> daftar = g.getFromLocationName(daerah.getText().toString(), 1);
+            Log.i("debugsz","goCari try 2");
             Address alamat = daftar.get(0);
+            Log.i("debugsz","goCari try 3");
 
             String findAlamat = alamat.getAddressLine(0);
             Double lintang = alamat.getLatitude();
             Double bujur = alamat.getLongitude();
+
+            Log.i("debugsz","goCari lintang : "+lintang);
+            Log.i("debugsz","goCari bujur : "+bujur);
 
 
             Double dbllat = Double.parseDouble(lat.getText().toString());
@@ -320,12 +471,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             // Getting URL to the Google Directions API
             String url = getDirectionsUrl(asal, tujuan);
             DownloadTask downloadTask = new DownloadTask();
-
             // Start downloading json data from Google Directions API
             downloadTask.execute(url);
 
         } catch (IOException e) {
             e.printStackTrace();
+            Log.i("debugsz","goCari catch");
         }
     }
 
@@ -343,11 +494,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onRoutingSuccess(ArrayList<Route> route, int shortestRouteIndex) {
         LatLngBounds boundsx = route.get(0).getLatLgnBounds();
         mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(boundsx, 90));
-        if (polylines.size() > 0) {
+        /*if (polylines.size() > 0) {
             for (Polyline poly : polylines) {
                 poly.remove();
             }
-        }
+        }*/
+        mMap.addMarker(new MarkerOptions().position(koordinatTujuan).title("Posisi tujuan").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+        mMap.addMarker(new MarkerOptions().position(koordinatAsal).title("Posisi Asal").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
         polylines = new ArrayList<>();
         for (int i = 0; i < 1; i++) {
             int colorIndex = i % COLORS.length;
