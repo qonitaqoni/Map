@@ -92,8 +92,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private LocationManager locationManager;
     private LocationRequest mLocationRequest;
     private GoogleApiClient mGoogleApiClient;
-    private Location mLastLocation;
-    private Marker mCurrLocationMarker;
     private int REQUEST_CODE_LOCATION = 2;
     DBHelper mydb;
     private ArrayList<LatLng> markerPoints;
@@ -255,7 +253,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     EditText zoom = (EditText) findViewById(R.id.etZoom);
                     if (zoom.getText().toString().isEmpty()) {
                         Toast.makeText(MapsActivity.this, "Isi perbesaran terlebih dahulu", Toast.LENGTH_SHORT).show();
-                    } else goCari();
+                    } else {
+                        getDetailTujuan();
+                    }
                     break;
                 case R.id.idStart:
                     Log.i("mapsactivity", "aktifkanGPS : true");
@@ -305,81 +305,22 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     }
 
-    private void getAlamatAsal(){
-        String url = "https://maps.googleapis.com/maps/api/geocode/json?latlng="+lat.getText().toString()+","+lng.getText().toString()+"&key="+SERVER_KEY;
-        Log.i("debugsz","getAlamatAsal url : "+url);
-        RequestQueue mRequestQueue;
-        Cache cache = new DiskBasedCache(getCacheDir(), 1024 * 1024); // 1MB cap
-        Network network = new BasicNetwork(new HurlStack());
-        mRequestQueue = new RequestQueue(cache, network);
-        mRequestQueue.start();
-        JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.GET,url,new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject response) {
-                Log.i("debugsz","getAlamatAsal response : "+response);
-                try {
-                    if(response.getString("status").equals("OK")){
-                        JSONArray rows = response.getJSONArray("results");
-                        JSONObject data = (JSONObject)rows.get(0);
-                        alamat_asal = data.getString("formatted_address");
-                        Log.i("debugsz","getAlamatAsal alamat_asal : "+alamat_asal);
-
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        },new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-            }
-        }
-        );
-        jsonObjReq.setRetryPolicy(new DefaultRetryPolicy(10000, DefaultRetryPolicy.DEFAULT_MAX_RETRIES, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
-        Volley.newRequestQueue(this).add(jsonObjReq);
-    }
-
-    private void getDirections(){
-        EditText daerah = (EditText) findViewById(R.id.etDaerah);
-        String url = "https://maps.googleapis.com/maps/api/directions/json?origin="+alamat_asal+"&destination="+daerah.getText().toString()+"&mode=transit&key="+this.getResources().getString(R.string.google_maps_key);
-        Log.i("debugsz","getDirections url : "+url);
-        RequestQueue mRequestQueue;
-        Cache cache = new DiskBasedCache(getCacheDir(), 1024 * 1024); // 1MB cap
-        Network network = new BasicNetwork(new HurlStack());
-        mRequestQueue = new RequestQueue(cache, network);
-        mRequestQueue.start();
-        JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.GET,url,new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject response) {
-                Log.i("debugsz","getDirections response distance : "+response);
-                try {
-                    if(response.getString("status").equals("OK")){
-
-
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        },new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-            }
-        }
-        );
-        jsonObjReq.setRetryPolicy(new DefaultRetryPolicy(10000, DefaultRetryPolicy.DEFAULT_MAX_RETRIES, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
-        Volley.newRequestQueue(this).add(jsonObjReq);
-    }
-
     private void getDetailTujuan(){
         EditText daerah = (EditText) findViewById(R.id.etDaerah);
         String url = "https://maps.googleapis.com/maps/api/geocode/json?address="+daerah.getText().toString()+"&key="+SERVER_KEY;
         Log.i("debugsz","getDetailTujuan url : "+url);
         RequestQueue mRequestQueue;
+
+        // Instantiate the cache
         Cache cache = new DiskBasedCache(getCacheDir(), 1024 * 1024); // 1MB cap
+
+        // Set up the network to use HttpURLConnection as the HTTP client.
         Network network = new BasicNetwork(new HurlStack());
+
+        // Instantiate the RequestQueue with the cache and network.
         mRequestQueue = new RequestQueue(cache, network);
         mRequestQueue.start();
+        // Formulate the request and handle the response.
         JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.GET,url,new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
@@ -396,6 +337,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         Double lngTujuan = Double.parseDouble(location.getString("lng"));
                         koordinatAsal = new LatLng(dbllat, dbllng);
                         koordinatTujuan = new LatLng(latTujuan, lngTujuan);
+                        hitungJarak(dbllat, dbllng,latTujuan, lngTujuan );
                         Routing routing = new Routing.Builder().
                                 travelMode(AbstractRouting.TravelMode.DRIVING).
                                 withListener(MapsActivity.this).
@@ -423,66 +365,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         Volley.newRequestQueue(this).add(jsonObjReq);
     }
 
-    private void goCari() {
+    /*private void goCari() {
         Log.i("debugsz","goCari");
         //getAlamatAsal();
         getDetailTujuan();
-        //getDirections();
-        /*EditText daerah = (EditText) findViewById(R.id.etDaerah);
-        Geocoder g = new Geocoder(getBaseContext());
-        try {
-            Log.i("debugsz","goCari try");
-            if(isPresent()){
-                Log.i("debugsz","goCari Present");
-            }else{
-                Log.i("debugsz","goCari not Present");
-            }
-            Log.i("debugsz","goCari daerah : "+daerah.getText().toString());
-            List<Address> daftar = g.getFromLocationName(daerah.getText().toString(), 1);
-            Log.i("debugsz","goCari try 2");
-            Address alamat = daftar.get(0);
-            Log.i("debugsz","goCari try 3");
 
-            String findAlamat = alamat.getAddressLine(0);
-            Double lintang = alamat.getLatitude();
-            Double bujur = alamat.getLongitude();
-
-            Log.i("debugsz","goCari lintang : "+lintang);
-            Log.i("debugsz","goCari bujur : "+bujur);
-
-
-            Double dbllat = Double.parseDouble(lat.getText().toString());
-            Double dbllng = Double.parseDouble(lng.getText().toString());
-            hitungJarak(dbllat, dbllng, lintang, bujur);
-
-            Toast.makeText(getBaseContext(), "Found!" + findAlamat, Toast.LENGTH_SHORT).show();
-            EditText zoom = (EditText) findViewById(R.id.etZoom);
-            Float dblzoom = Float.parseFloat(zoom.getText().toString());
-            Toast.makeText(this, "Move to " + findAlamat + " Lat :" + lintang + " Long:" + bujur, Toast.LENGTH_SHORT).show();
-            goToPeta(lintang, bujur, dblzoom);
-
-            lat.setText(lintang.toString());
-            lng.setText(bujur.toString());
-
-            LatLng asal = new LatLng(dbllat, dbllng);
-            LatLng tujuan = new LatLng(lintang, bujur);
-
-            Routing routing = new Routing.Builder().travelMode(AbstractRouting.TravelMode.DRIVING).withListener(this).alternativeRoutes(true).waypoints(asal, tujuan)
-                    .avoid(AbstractRouting.AvoidKind.HIGHWAYS)
-                    .build();
-            routing.execute();
-
-            // Getting URL to the Google Directions API
-            String url = getDirectionsUrl(asal, tujuan);
-            DownloadTask downloadTask = new DownloadTask();
-            // Start downloading json data from Google Directions API
-            downloadTask.execute(url);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            Log.i("debugsz","goCari catch");
-        }*/
-    }
+    }*/
 
     @Override
     public void onRoutingFailure(RouteException e) {
@@ -497,12 +385,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onRoutingSuccess(ArrayList<Route> route, int shortestRouteIndex) {
         LatLngBounds boundsx = route.get(0).getLatLgnBounds();
+        mMap.clear();
         mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(boundsx, 90));
-        /*if (polylines.size() > 0) {
-            for (Polyline poly : polylines) {
-                poly.remove();
-            }
-        }*/
+
         mMap.addMarker(new MarkerOptions().position(koordinatTujuan).title("Posisi tujuan").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
         mMap.addMarker(new MarkerOptions().position(koordinatAsal).title("Posisi Asal").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
         polylines = new ArrayList<>();
@@ -510,8 +395,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             int colorIndex = i % COLORS.length;
             PolylineOptions polyOptions = new PolylineOptions();
             polyOptions.color(getResources().getColor(COLORS[colorIndex]));
-            polyOptions.width(10 + i * 3);
-            polyOptions.addAll(route.get(i).getPoints());
+            polyOptions.width(10 + i * 3); //lebar garis luar
+            polyOptions.addAll(route.get(i).getPoints()); //menambahkan titik
             Polyline polyline = mMap.addPolyline(polyOptions);
             polylines.add(polyline);
         }
@@ -522,134 +407,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     }
 
-    // Fetches data from url passed
-    private class DownloadTask extends AsyncTask<String, Void, String> {
-
-        // Downloading data in non-ui thread
-        @Override
-        protected String doInBackground(String... url) {
-
-            // For storing data from web service
-
-            String data = "";
-
-            try{
-                // Fetching the data from web service
-                data = downloadUrl(url[0]);
-            }catch(Exception e){
-                Log.d("Background Task",e.toString());
-            }
-            return data;
-        }
-
-        // Executes in UI thread, after the execution of
-        // doInBackground()
-        @Override
-        protected void onPostExecute(String result) {
-            super.onPostExecute(result);
-
-            ParserTask parserTask = new ParserTask();
-
-            // Invokes the thread for parsing the JSON data
-            parserTask.execute(result);
-        }
-    }
-
-    /** A class to parse the Google Places in JSON format */
-    private class ParserTask extends AsyncTask<String, Integer, List<List<HashMap<String,String>>> > {
-
-        // Parsing the data in non-ui thread
-        @Override
-        protected List<List<HashMap<String, String>>> doInBackground(String... jsonData) {
-
-            JSONObject jObject;
-            List<List<HashMap<String, String>>> routes = null;
-
-            try {
-                jObject = new JSONObject(jsonData[0]);
-                Direction parser = new Direction();
-
-                // Starts parsing data
-                routes = parser.parse(jObject);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return routes;
-        }
-
-        protected void onPostExecute(List<List<HashMap<String, String>>> result) {
-
-            ArrayList<LatLng> points = null;
-            PolylineOptions lineOptions = null;
-
-            // Traversing through all the routes
-            for(int i=0;i<result.size();i++){
-                points = new ArrayList<LatLng>();
-                lineOptions = new PolylineOptions();
-
-                // Fetching i-th route
-                List<HashMap<String, String>> path = result.get(i);
-
-                // Fetching all the points in i-th route
-                for(int j=0;j<path.size();j++){
-                    HashMap<String,String> point = path.get(j);
-
-                    double lat = Double.parseDouble(point.get("lat"));
-                    double lng = Double.parseDouble(point.get("lng"));
-                    LatLng position = new LatLng(lat, lng);
-
-                    points.add(position);
-                }
-
-                // Adding all the points in the route to LineOptions
-                lineOptions.addAll(points);
-                lineOptions.width(2);
-                lineOptions.color(Color.RED);
-            }
-
-            // Drawing polyline in the Google Map for the i-th route
-            mMap.addPolyline(lineOptions);
-        }
-
-    }
-
-    private String downloadUrl(String strUrl) throws IOException{
-        String data = "";
-        InputStream iStream = null;
-        HttpURLConnection urlConnection = null;
-        try{
-            URL url = new URL(strUrl);
-
-            // Creating an http connection to communicate with url
-            urlConnection = (HttpURLConnection) url.openConnection();
-
-            // Connecting to url
-            urlConnection.connect();
-
-            // Reading data from url
-            iStream = urlConnection.getInputStream();
-
-            BufferedReader br = new BufferedReader(new InputStreamReader(iStream));
-
-            StringBuffer sb  = new StringBuffer();
-
-            String line = "";
-            while( ( line = br.readLine())  != null){
-                sb.append(line);
-            }
-
-            data = sb.toString();
-
-            br.close();
-
-        }catch(Exception e){
-            Log.d("downloading url", e.toString());
-        }finally{
-            iStream.close();
-            urlConnection.disconnect();
-        }
-        return data;
-    }
 
     private void hitungJarak(double latAsal, Double lngAsal, double latTujuan, double lngTujuan) {
         Location asal = new Location("asal");
@@ -660,7 +417,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         asal.setLongitude(lngAsal);
         float jarak = (float) asal.distanceTo(tujuan) / 1000;
         String jaraknya = String.valueOf(jarak);
-        Toast.makeText(getBaseContext(), "jarak :" + jaraknya + " km", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getBaseContext(), "Jarak :" + jaraknya + " km", Toast.LENGTH_SHORT).show();
     }
 
     private void hideKeyboard(View v) {
@@ -825,79 +582,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap.addMarker(new MarkerOptions().position(new LatLng(latitude, longitude)).title("You are here!"));
 
     }
-
-    private String getDirectionsUrl(LatLng origin,LatLng dest){
-
-        // Origin of route
-        String str_origin = "origin="+origin.latitude+","+origin.longitude;
-
-        // Destination of route
-        String str_dest = "destination="+dest.latitude+","+dest.longitude;
-
-        // Sensor enabled
-        String sensor = "sensor=false";
-
-        // Waypoints
-        String waypoints = "";
-        for(int i=2;i<markerPoints.size();i++){
-            LatLng point  = (LatLng) markerPoints.get(i);
-            if(i==2)
-                waypoints = "waypoints=";
-            waypoints += point.latitude + "," + point.longitude + "|";
-        }
-
-        // Building the parameters to the web service
-        String parameters = str_origin+"&"+str_dest+"&"+sensor+"&"+waypoints;
-
-        // Output format
-        String output = "json";
-
-        // Building the url to the web service
-        String url = "https://maps.googleapis.com/maps/api/directions/"+output+"?"+parameters;
-
-        return url;
-    }
-
-
-    /*public void onLocationChanged(Location location) {
-        mLastLocation = location;
-        if (mCurrLocationMarker != null) {
-            mCurrLocationMarker.remove();
-        }
-
-        //Place current location marker
-        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-        MarkerOptions markerOptions = new MarkerOptions();
-        markerOptions.position(latLng);
-        markerOptions.title("Current Position");
-        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
-        mCurrLocationMarker = mMap.addMarker(markerOptions);
-
-        //move map camera
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
-
-        //optionally, stop location updates if only current location is needed
-        if (mGoogleApiClient != null) {
-            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
-        }
-
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-    }
-
-    @Override
-    public void onProviderEnabled(String provider) {
-
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-
-    }*/
 
 
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
